@@ -73,7 +73,7 @@ def next_calendar_day(Y: int, M: int, D, calendar: Calendar) -> Tuple[int, int, 
     return (Y, M, D)
 
 
-def calendar_date_to_julian_day_number(Y, M, D, calendar: Calendar=Calendar.GREGORIAN) -> int:
+def calendar_date_to_julian_day_number(Y: int , M: int , D: int, calendar: Calendar=Calendar.GREGORIAN) -> int:
     """Calculate the Julian day number of a date expressed in the proleptic Julian calendar."""
 
     # The year -1 (1 BCE) is followed directly by +1 (1 CE); year 0 is invalid.
@@ -102,12 +102,116 @@ def calendar_date_to_julian_day_number(Y, M, D, calendar: Calendar=Calendar.GREG
     return 1721117 + (Y * 365) + (Y // 4) + gregorian_offset + days_before_month[M] + D
 
 
-def julian_day_number_to_sidney_date(jd):
-    """test function."""
-    years = jd // 365
-    jd -= years * 365
+def julian_day_number_to_julian_date(jd: int):
+    """Convert a Julian day number to a Julian date."""
 
-    assert 0 <= jd <= 365
+    jd -= 1721118
+    Y = 0
 
-    if jd < 0:
-        pass
+    Y += 4 * (jd // 1461)
+    jd  %= 1461 # 365, 365, 365, 366
+
+    if jd < 365:
+        Y += 0
+        jd -= 0
+    elif jd < 365 + 365:
+        Y += 1
+        jd -= 365
+    elif jd < 365 + 365 + 365:
+        Y += 2
+        jd -= 2 * 365
+    else:
+        Y += 3
+        jd -= 3 * 365
+
+    # Days before month M, for a year starting in March.
+    days_before_month = (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)
+
+    for M in range(12):
+        if M == 11 or jd < days_before_month[M + 1]:
+            jd -= days_before_month[M]
+            break
+
+    # Handle March..February year
+
+    D = jd + 1
+
+    M += 3
+    if M > 12:
+        M -= 12
+        Y += 1
+
+    if Y <= 0:
+        Y -= 1
+
+    return (Y, M, D)
+
+
+def julian_day_number_to_gregorian_date(jd: int):
+    """Convert a Julian day number to a Gregorian date."""
+
+    # TODO: make this work.
+
+    jd -= 1721118-22
+    Y = 0
+
+    # Period #1 (400 years) ......... :  3 x 36524 days + 1 x 36525 days  == 146097 days.
+    # Period #2 (100 years) ......... : 24 x  1461 days + 1 x  1460 days  ==  36524 days.
+    # Period #3 (  4 years) ......... :  3 x   365 days + 1 x   366 days  ==   1461 days.
+
+    Y += 400 * (jd // 146097)
+    jd %= 146097
+
+    Y += 100 * (jd // 36524)
+    jd %= 36524
+
+    Y += 4 * (jd // 1461)
+    jd %= 1461 # 365, 365, 365, 366
+
+    if jd < 365:
+        Y += 0
+        jd -= 0
+    elif jd < 365 + 365:
+        Y += 1
+        jd -= 365
+    elif jd < 365 + 365 + 365:
+        Y += 2
+        jd -= 2 * 365
+    else:
+        Y += 3
+        jd -= 3 * 365
+
+    # Days before month M, for a year starting in March.
+    days_before_month = (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)
+
+    for M in range(12):
+        if M == 11 or jd < days_before_month[M + 1]:
+            jd -= days_before_month[M]
+            break
+
+    # Handle March..February year
+
+    D = jd + 1
+
+    M += 3
+    if M > 12:
+        M -= 12
+        Y += 1
+
+    if Y <= 0:
+        Y -= 1
+
+    return (Y, M, D)
+
+
+def test():
+    Y = -3000
+    M = 1
+    D = 1
+
+    for q in range(100000):
+        jd = calendar_date_to_julian_day_number(Y, M, D, Calendar.JULIAN)
+        (YY, MM, DD) = julian_day_number_to_gregorian_date(jd)
+        print(jd, "------", Y, M, D, "-----", YY, MM, DD)
+        assert (YY, MM, DD) == (Y, M, D)
+        (Y, M, D) = next_calendar_day(Y, M, D, Calendar.JULIAN)
