@@ -6,44 +6,48 @@
 
 import unittest
 
-from calendar import Calendar, calendar_date_to_julian_day_number, next_calendar_day, is_divisible_by, julian_day_number_to_julian_date
+from calendar import JulianCalendarDate, GregorianCalendarDate
 
 
 class TestCalendarFunctionality(unittest.TestCase):
     """Test the calendar functionality."""
 
-    def test_all(self):
-        """Test calendar functions."""
+    def test_julian_calendar_functionality(self):
+        """Test Julian calendar functionality."""
 
-        julian_date    = (-4713,  1,  1)
-        gregorian_date = (-4714, 11, 24)
+        julian_date = JulianCalendarDate(-4713,  1,  1)
         jd = 0
 
-        while gregorian_date[0] <= 9999:
+        while julian_date.year <= 9999:
 
-            jd_from_julian_date = calendar_date_to_julian_day_number(*julian_date, Calendar.JULIAN)
-            jd_from_gregorian_date = calendar_date_to_julian_day_number(*gregorian_date, Calendar.GREGORIAN)
+            jd_from_julian_date = int(julian_date)
 
             self.assertEqual(jd_from_julian_date, jd)
+
+            julian_date_from_jd = JulianCalendarDate.from_julian_day_number(jd)
+
+            self.assertEqual(julian_date, julian_date_from_jd)
+
+            julian_date = next(julian_date)
+            jd += 1
+
+    def test_gregorian_calendar_functionality(self):
+        """Test Gregorian calendar functionality."""
+
+        gregorian_date = GregorianCalendarDate(-4714,  11,  24)
+        jd = 0
+
+        while gregorian_date.year <= 9999:
+
+            jd_from_gregorian_date = int(gregorian_date)
+
             self.assertEqual(jd_from_gregorian_date, jd)
 
-            julian_date_from_jd = julian_day_number_to_julian_date(jd)
-            assert julian_date == julian_date_from_jd
+            gregorian_date_from_jd = GregorianCalendarDate.from_julian_day_number(jd)
 
-            #show = False
+            self.assertEqual(gregorian_date, gregorian_date_from_jd)
 
-            #if gregorian_date == (1, 1):
-            #    if GY in (-4713, -1, +1) or is_divisible_by(GY, 1000):
-            #        show = True
-
-            #if (jd_from_julian_date == 0) or (jd_from_gregorian_date == 0):
-            #    show = True
-
-            #if show:
-            #    print("gregorian {:5d}-{:02d}-{:02d} julian {:5d}-{:02d}-{:02d} julian_day {:7d}".format(*gregorian_date, *julian_date, jd))
-
-            julian_date = next_calendar_day(*julian_date, Calendar.JULIAN)
-            gregorian_date = next_calendar_day(*gregorian_date, Calendar.GREGORIAN)
+            gregorian_date = next(gregorian_date)
             jd += 1
 
 
