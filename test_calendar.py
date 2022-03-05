@@ -2,7 +2,7 @@
 
 """Unit test for the calendar functions."""
 
-#pylint: disable=invalid-name
+#pylint: disable=line-too-long, invalid-name
 
 import unittest
 
@@ -31,6 +31,20 @@ class TestCalendarFunctionality(unittest.TestCase):
             julian_date = next(julian_date)
             jd += 1
 
+    def test_julian_start_of_year(self):
+        """Test routine to obtain the 1st of March date of a regularized year in the Julian calendar."""
+
+        for year in range(-50000, +50000):
+            if year == 0:
+                continue
+
+            regularized_year = year if year > 0 else year + 1
+
+            j1 = JulianCalendarDate.to_julian_day_number(regularized_year)
+            j2 = int(JulianCalendarDate(year, 3, 1))
+
+            self.assertEqual(j1, j2)
+
     def test_gregorian_calendar_functionality(self):
         """Test Gregorian calendar functionality."""
 
@@ -49,6 +63,20 @@ class TestCalendarFunctionality(unittest.TestCase):
 
             gregorian_date = next(gregorian_date)
             jd += 1
+
+    def test_gregorian_start_of_year(self):
+        """Test routine to obtain the 1st of March date of a regularized year in the Gregorian calendar."""
+
+        for year in range(-50000, +50000):
+            if year == 0:
+                continue
+
+            regularized_year = year if year > 0 else year + 1
+
+            g1 = GregorianCalendarDate.to_julian_day_number(regularized_year)
+            g2 = int(GregorianCalendarDate(year, 3, 1))
+
+            self.assertEqual(g1, g2)
 
 
 if __name__ == "__main__":

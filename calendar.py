@@ -1,4 +1,4 @@
-"""This module provides functions to work with dates in the Julian and Gregorian calendars."""
+"""This module provides classes that represent dates in the Julian and Gregorian calendars."""
 
 #pylint: disable=line-too-long
 
@@ -8,10 +8,18 @@ def is_divisible_by(k: int, divider: int) -> bool:
 
 
 class AbstractCalendarDate:
-    """This is the base class of both the JulianCalendarDate and GregorianCalendarDate classes."""
+    """This is the base class of the JulianCalendarDate and GregorianCalendarDate classes.
 
-    # Days before month M, for a year starting in March.
-    # This table is used to convert between dates and julian day numbers.
+    It abstracts calendar systems with a 12-month year, with February being either 28 or 29 days long,
+    that are distinguished in the way they classify years as leapyears.
+
+    The AbstractCalendarDate is not intended to be instantiated; only its derviced classes are.
+    """
+
+    # pylint: disable=no-member
+
+    # Days before a month month, for a year starting in March.
+    # This table is used to convert between dates and Julian day numbers.
     days_before_month = (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)
 
     def __init__(self, year: int, month: int, day: int):
@@ -25,7 +33,7 @@ class AbstractCalendarDate:
         self.day   = day
 
     def __iter__(self):
-        """When using a CalendarDate as an iterator, it will yield the year, month, and day, in that order.
+        """When using an AbstractCalendarDate as an iterator, it will yield the year, month, and day, in that order.
 
         This makes it possible to convert a date to a tuple, for example.
         """
@@ -57,11 +65,20 @@ class AbstractCalendarDate:
 
         return self.__class__(year, month, day)
 
+    @classmethod
+    def is_leapyear(cls, year: int) -> bool:
+        """Return True iff the year is a leapyear according to the rules of the Julian calendar."""
 
-    @staticmethod
-    def is_leapyear(year: int) -> bool:
-        """This abstract method is implemented in the derived classes."""
-        raise NotImplementedError()
+        # The year -1 (1 BCE) is followed directly by +1 (1 CE); year 0 is invalid.
+        if year == 0:
+            raise ValueError()
+
+        # Handle the absence of year 0 by incrementing BCE years by one,
+        # so the years increment smoothly.
+        if year < 0:
+            year += 1
+
+        return cls.leapyear_rule(year)
 
     @classmethod
     def length_of_month(cls, year: int, month: int) -> int:
@@ -82,27 +99,8 @@ class AbstractCalendarDate:
         # The month February has 29 days in leap years, 28 days in normal years.
         return 29 if cls.is_leapyear(year) else 28
 
-
-class JulianCalendarDate(AbstractCalendarDate):
-    """Represent a Julian calendar date."""
-
-    @staticmethod
-    def is_leapyear(year: int) -> bool:
-        """Return True iff the year is a leapyear according to the rules of the Julian calendar."""
-
-        # The year -1 (1 BCE) is followed directly by +1 (1 CE); year 0 is invalid.
-        if year == 0:
-            raise ValueError()
-
-        # Handle the absence of year 0 by incrementing BCE years by one,
-        # so the years increment smoothly.
-        if year < 0:
-            year += 1
-
-        return is_divisible_by(year, 4)
-
     def __int__(self) -> int:
-        """Convert a Julian calendar date to a Julian day number."""
+        """Convert a calendar date to a Julian day number."""
 
         (year, month, day) = self
 
@@ -118,39 +116,33 @@ class JulianCalendarDate(AbstractCalendarDate):
             month += 12
             year -= 1
 
+        day -= 1
+
         # Calculate and return the Julian day number.
-        return 1721117 + (year * 365) + (year // 4) + AbstractCalendarDate.days_before_month[month] + day
+        return self.__class__.to_julian_day_number(year) + AbstractCalendarDate.days_before_month[month] + day
 
-
-    @staticmethod
-    def from_julian_day_number(jday: int) -> 'JulianCalendarDate':
-        """Convert a Julian day number to a Julian calendar date."""
+    @classmethod
+    def from_julian_day_number(cls, julian_day_number: int) -> 'AbstractCalendarDate':
+        """Convert a Julian day number to a calendar date."""
 
         year  = 0
-        jday -= 1721118
+        julian_day_number -= cls.to_julian_day_number(0)
 
-        # Handle (subtract) 4-year periods.
-
-        periods = jday // 1461  # May be negative.
-
-        year +=    4 * periods
-        jday -= 1461 * periods
-
-        # Handle (subtract) up to three 1-year periods.
-
-        periods = min(jday // 365, 3)
-
-        year +=       periods
-        jday -= 365 * periods
+        for (period_days, period_years, limit) in cls._reductions:
+            periods = julian_day_number // period_days
+            if limit is not None:
+                periods = min(periods, limit)
+            year += periods * period_years
+            julian_day_number -= periods * period_days
 
         # Handle months.
 
         for month in range(12):
-            if month == 11 or jday < AbstractCalendarDate.days_before_month[month + 1]:
-                jday -= AbstractCalendarDate.days_before_month[month]
+            if month == 11 or julian_day_number < AbstractCalendarDate.days_before_month[month + 1]:
+                julian_day_number -= AbstractCalendarDate.days_before_month[month]
                 break
 
-        day = jday + 1
+        day = julian_day_number + 1
 
         # Move start-of-year from March to January.
 
@@ -164,101 +156,44 @@ class JulianCalendarDate(AbstractCalendarDate):
         if year <= 0:
             year -= 1
 
-        return JulianCalendarDate(year, month, day)
+        return cls(year, month, day)
+
+
+class JulianCalendarDate(AbstractCalendarDate):
+    """Represent a date in the proleptic Julian calendar."""
+
+    _reductions = (
+        (  1461,   4, None),
+        (   365,   1,    3)
+    )
+
+    @staticmethod
+    def leapyear_rule(regularized_year: int) -> bool:
+        """Return True if the regularized year is a leapyear according to the Julian calendar, False if not."""
+        return is_divisible_by(regularized_year, 4)
+
+    @staticmethod
+    def to_julian_day_number(regularized_year: int):
+        """Return the Julian day number of March 1st according to the Julian calendar with regularized years."""
+        return 1721118 + (regularized_year * 365) + (regularized_year // 4)
 
 
 class GregorianCalendarDate(AbstractCalendarDate):
-    """Represent a Gregorian calendar date."""
+    """Represent a date in the proleptic Gregorian calendar."""
+
+    _reductions = (
+        (146097, 400, None),
+        ( 36524, 100,    3),
+        (  1461,   4, None),
+        (   365,   1,    3)
+    )
 
     @staticmethod
-    def is_leapyear(year: int) -> bool:
-        """Return True iff the year is a leapyear according to the rules of the Gregorian calendar."""
-
-        # The year -1 (1 BCE) is followed directly by +1 (1 CE); year 0 is invalid.
-        if year == 0:
-            raise ValueError()
-
-        # Handle the absence of year 0 by incrementing BCE years by one,
-        # so the years increment smoothly.
-        if year < 0:
-            year += 1
-
-        return is_divisible_by(year, 4) ^ is_divisible_by(year, 100) ^ is_divisible_by(year, 400)
-
-    def __int__(self) -> int:
-        """Convert a Gregorian calendar date to a Julian day number."""
-
-        (year, month, day) = self
-
-        # Handle the absence of year 0 by incrementing BCE years by one,
-        # so the years increment smoothly.
-        if year < 0:
-            year += 1
-
-        # Start the year in March, moving February (and its leap day, if present)
-        # to the end of the year.
-        month -= 3
-        if month < 0:
-            month += 12
-            year  -= 1
-
-        # Calculate and return the Julian day number.
-        return 1721119 + (year * 365) + (year // 4) - (year // 100) + (year // 400) + AbstractCalendarDate.days_before_month[month] + day
+    def leapyear_rule(regularized_year: int) -> bool:
+        """Return True if the regularized year is a leapyear according to the Gregorian calendar, False if not."""
+        return is_divisible_by(regularized_year, 4) ^ is_divisible_by(regularized_year, 100) ^ is_divisible_by(regularized_year, 400)
 
     @staticmethod
-    def from_julian_day_number(jday: int) -> 'GregorianCalendarDate':
-        """Convert a Julian day number to a Gregorian calendar date."""
-
-        year  = 0
-        jday -= 1721120
-
-        # Handle (subtract) 400-year periods.
-
-        periods = jday // 146097  # May be negative.
-
-        year +=    400 * periods
-        jday -= 146097 * periods
-
-        # Handle (subtract) up to three 100-year periods.
-
-        periods = min(jday // 36524, 3)
-
-        year +=   100 * periods
-        jday -= 36524 * periods
-
-        # Handle (subtract) 4-year periods.
-
-        periods = jday // 1461
-
-        year +=    4 * periods
-        jday -= 1461 * periods
-
-        # Handle (subtract) up to three 1-year periods.
-
-        periods = min(jday // 365, 3)
-
-        year +=       periods
-        jday -= 365 * periods
-
-        # Handle months.
-
-        for month in range(12):
-            if month == 11 or jday < AbstractCalendarDate.days_before_month[month + 1]:
-                jday -= AbstractCalendarDate.days_before_month[month]
-                break
-
-        day = jday + 1
-
-        # Move start-of-year from March to January.
-
-        month += 3
-        if month > 12:
-            month -= 12
-            year  += 1
-
-        # Skip over year 0.
-
-        if year <= 0:
-            year -= 1
-
-        return GregorianCalendarDate(year, month, day)
+    def to_julian_day_number(regularized_year: int):
+        """Return the Julian day number of March 1st according to the Gregorian calendar with regularized years."""
+        return 1721120 + (regularized_year * 365) + (regularized_year // 4) - (regularized_year // 100) + (regularized_year // 400)
