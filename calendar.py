@@ -124,10 +124,10 @@ class AbstractCalendarDate:
         year = 0
         julian_day_number -= cls._year_julian_day_number(0)
 
-        for (period_days, period_years, limit) in cls._reductions:
+        for (period_days, period_years, max_periods) in cls._reductions:
             periods = julian_day_number // period_days
-            if limit is not None:
-                periods = min(periods, limit)
+            if max_periods is not None and periods > max_periods:
+                periods = max_periods
             year += periods * period_years
             julian_day_number -= periods * period_days
 
@@ -167,7 +167,7 @@ class JulianCalendarDate(AbstractCalendarDate):
 
     @staticmethod
     def _year_julian_day_number(normalized_year: int) -> int:
-        """Return the Julian day number of March 1st of a normalized year, according to the Julian calendar."""
+        """Calculate the Julian day number of March 1st of a normalized year, according to the Julian calendar."""
         return 1721118 + (normalized_year * 365) + (normalized_year // 4)
 
 
@@ -183,5 +183,5 @@ class GregorianCalendarDate(AbstractCalendarDate):
 
     @staticmethod
     def _year_julian_day_number(normalized_year: int) -> int:
-        """Return the Julian day number of March 1st of a normalized year, according to the Gregorian calendar."""
+        """Calculate the Julian day number of March 1st of a normalized year, according to the Gregorian calendar."""
         return 1721120 + (normalized_year * 365) + (normalized_year // 4) - (normalized_year // 100) + (normalized_year // 400)
