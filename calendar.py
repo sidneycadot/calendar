@@ -61,14 +61,19 @@ class AbstractCalendarDate:
 
     # Below, we provide implementations for the six comparison operators in Python.
     #
-    # We do comparison based on the underlying days denoted by the calendar dates, and
-    # do not consider the difference between the types (JulkianCalendarDate, GregorianCalendarDate).
+    # We do comparison based on the underlying days denoted by the calendar dates, and we
+    # ignore the difference between the types (JulianCalendarDate, GregorianCalendarDate).
     #
-    # Thus, a JulianCalendarDate may compare equal to a GregorianCalendarDate, e.g., the comparison
+    # Thus, a JulianCalendarDate may compare equal to a GregorianCalendarDate, e.g.,
+    # the comparison
     #
     #   JulianCalendarDate(1752, 9, 2) == GregorianCalendarDate(1752, 9, 13)
     #
     # will evaluate as True.
+    #
+    # This interpretation of equality is consistent with what is done in Python for
+    # numeric types; there, too, the values are compared and not their representations;
+    # e.g. the integer 3 (int) == 3.0 (float).
 
     def __lt__(self, rhs: 'AbstractCalendarDate') -> bool:
         """Return True if the lhs date is strictly before the rhs date, False otherwise."""
@@ -115,13 +120,13 @@ class AbstractCalendarDate:
 
     @classmethod
     def is_leapyear(cls, year: int) -> bool:
-        """Return if the year is a leapyear according to the rules of the Julian calendar."""
+        """Return if the year is a leapyear according to the calendar's leapyear rule."""
         normalized_year = normalize_year(year)
         return cls._leapyear_rule(normalized_year)
 
     @classmethod
     def length_of_month(cls, year: int, month: int) -> int:
-        """Return the length of the specified month in the specified year, in the Julian calendar."""
+        """Return the length of the specified month in the specified year."""
 
         valid_month = (year != 0) and (1 <= month <= 12)
         if not valid_month:
@@ -160,10 +165,13 @@ class AbstractCalendarDate:
         # day of the year. This simplifies the calculations.
 
         # "Day zero" for our calculations will be March 1st in the year 1 BCE, which is our 'year zero'.
+
         year = 0
         julian_day_number -= cls._year_julian_day_number(0)
 
-        for (period_days, period_years, max_periods) in cls._reductions:
+        # Perform the reductions for the leap-year periods.
+
+        for (period_days, period_years, max_periods) in cls._leapyear_periods:
             periods = julian_day_number // period_days
             if max_periods is not None and periods > max_periods:
                 periods = max_periods
@@ -197,7 +205,7 @@ class AbstractCalendarDate:
 class JulianCalendarDate(AbstractCalendarDate):
     """Represent a date in the proleptic Julian calendar."""
 
-    _reductions = ((1461, 4, None), (365, 1, 3))
+    _leapyear_periods = ((1461, 4, None), (365, 1, 3))
 
     @staticmethod
     def _leapyear_rule(normalized_year: int) -> bool:
@@ -213,7 +221,7 @@ class JulianCalendarDate(AbstractCalendarDate):
 class GregorianCalendarDate(AbstractCalendarDate):
     """Represent a date in the proleptic Gregorian calendar."""
 
-    _reductions = ((146097, 400, None), (36524, 100, 3), (1461, 4, None), (365, 1, 3))
+    _leapyear_periods = ((146097, 400, None), (36524, 100, 3), (1461, 4, None), (365, 1, 3))
 
     @staticmethod
     def _leapyear_rule(normalized_year: int) -> bool:
