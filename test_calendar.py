@@ -1,8 +1,8 @@
 #! /usr/bin/env -S python3 -B
 
-"""Unit test for the calendar functions."""
+"""Unit test for calendar functionality."""
 
-#pylint: disable=line-too-long, invalid-name
+# pylint: disable=line-too-long
 
 import unittest
 
@@ -52,6 +52,8 @@ class TestJulianCalendarDate(unittest.TestCase):
 
         Note: this test presumes that the calendar methods are correct.
         """
+
+        # pylint: disable=protected-access
 
         for year in range(-5000, +5001):
             if year == 0:
@@ -108,6 +110,8 @@ class TestGregorianCalendarDate(unittest.TestCase):
         Note: this test presumes that the calendar methods are correct.
         """
 
+        # pylint: disable=protected-access
+
         for year in range(-5000, +5001):
             if year == 0:
                 continue  # Skip non-existing year 0.
@@ -121,6 +125,7 @@ class TestGregorianCalendarDate(unittest.TestCase):
 
 
 class TestAbstractCalendarDates(unittest.TestCase):
+    """Test class for functionality that works between multiple calendar classes."""
 
     def test_calendar_datecomparisons(self):
         """Test the six comparison operators for Julian and Gregorian dates."""

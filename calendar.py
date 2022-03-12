@@ -1,11 +1,11 @@
 """This module provides classes that represent dates in the Julian and Gregorian calendars."""
 
-#pylint: disable=line-too-long
+# pylint: disable=line-too-long
 
 
-def is_divisible_by(n: int, divider: int) -> bool:
+def is_divisible_by(num: int, divider: int) -> bool:
     """Return True if the first argument is divisible by the second argument, and False if not."""
-    return n % divider == 0
+    return num % divider == 0
 
 
 def normalize_year(year: int) -> int:
@@ -15,8 +15,8 @@ def normalize_year(year: int) -> int:
     followed directly by the year 1 CE (+1). This discontinuity makes the calculations more
     cumbersome than they should be.
 
-    For that reason, we increase BCE years by 1, making the year sequence continuous. We
-    call the resulting year indication a 'normalized year'.
+    For that reason, we increment BCE years by 1, making the year sequence continuous.
+    We call the resulting year number a 'normalized year'.
     """
     if year == 0:
         raise ValueError("Year zero does not exist, so cannot be normalized.")
@@ -36,7 +36,7 @@ class AbstractCalendarDate:
 
     # Days before a month, for a 12-month year starting in March.
     # This table is used to convert between dates and Julian day numbers.
-    days_before_month = (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)
+    _days_before_month = (0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337)
 
     def __init__(self, year: int, month: int, day: int):
         """Generic initialization of a calendar date (Gregorian or Julian)."""
@@ -96,7 +96,7 @@ class AbstractCalendarDate:
 
     def __next__(self) -> 'AbstractCalendarDate':
         """Calculate the next calendar day.
-        
+
         Note that this method skips over the year zero.
         """
         (year, month, day) = self
@@ -149,15 +149,15 @@ class AbstractCalendarDate:
         day -= 1
 
         # Calculate and return the Julian day number.
-        return self._year_julian_day_number(normalized_year) + AbstractCalendarDate.days_before_month[month] + day
+        return self._year_julian_day_number(normalized_year) + AbstractCalendarDate._days_before_month[month] + day
 
     @classmethod
     def from_julian_day_number(cls, julian_day_number: int) -> 'AbstractCalendarDate':
         """Convert a Julian day number to a calendar date."""
 
         # We perform our calculations with years that start in March. The advantage of this is that
-        # February will be the last month in the year, and its leapday (if applicable) will be the last month
-        # of the year; this simplifies the calculations that follow.
+        # February will be the last month in the year, and its leapday (if present) will be the last
+        # day of the year. This simplifies the calculations.
 
         # "Day zero" for our calculations will be March 1st in the year 1 BCE, which is our 'year zero'.
         year = 0
@@ -173,8 +173,8 @@ class AbstractCalendarDate:
         # Handle months.
 
         for month in range(12):
-            if month == 11 or julian_day_number < AbstractCalendarDate.days_before_month[month + 1]:
-                julian_day_number -= AbstractCalendarDate.days_before_month[month]
+            if month == 11 or julian_day_number < AbstractCalendarDate._days_before_month[month + 1]:
+                julian_day_number -= AbstractCalendarDate._days_before_month[month]
                 break
 
         day = julian_day_number + 1
