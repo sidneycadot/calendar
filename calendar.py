@@ -19,7 +19,7 @@ def normalize_year(year: int) -> int:
     We call the resulting year number a 'normalized year'.
     """
     if year == 0:
-        raise ValueError("Year zero does not exist, so cannot be normalized.")
+        raise ValueError("Year zero does not exist, so it cannot be normalized.")
 
     return year if year > 0 else year + 1
 
@@ -71,8 +71,8 @@ class AbstractCalendarDate:
     #
     # will evaluate as True.
     #
-    # This interpretation of equality is consistent with what is done in Python for
-    # numeric types; there, too, the values are compared and not their representations;
+    # This interpretation of equality is analogous with the way Python handles comparisons
+    # for numeric types; there, too, the values are compared and not their representations;
     # e.g. the integer 3 (int) == 3.0 (float).
 
     def __lt__(self, rhs: 'AbstractCalendarDate') -> bool:
