@@ -2,6 +2,13 @@
 
 # pylint: disable=line-too-long
 
+from __future__ import annotations
+
+from typing import TypeVar
+
+# Note: once support for typing.Self (as proposed in PEP-673) is mainstream, we can update the
+# type annotations to use typing.Self instead of the 'TCalendarDate' type variable.
+TCalendarDate = TypeVar("TCalendarDate", bound="AbstractCalendarDate")
 
 def is_divisible_by(num: int, divider: int) -> bool:
     """Return True if the first argument is divisible by the second argument, and False if not."""
@@ -59,47 +66,46 @@ class AbstractCalendarDate:
         """String representation of a calendar date."""
         return "{}(year = {}, month = {}, day = {})".format(self.__class__.__name__, *self)
 
-    # Below, we provide implementations for the six comparison operators in Python.
+    # Below, implementations are procided for the six comparison operators in Python.
     #
-    # We do comparison based on the underlying days denoted by the calendar dates, and we
-    # ignore the difference between the types (JulianCalendarDate, GregorianCalendarDate).
+    # Comparisons are done based on the underlying ordinal days denoted by the calendar dates;
+    # the specific types (JulianCalendarDate, GregorianCalendarDate) are not taken into account.
     #
-    # Thus, a JulianCalendarDate may compare equal to a GregorianCalendarDate, e.g.,
-    # the comparison
+    # Thuerefore, a JulianCalendarDate may compare equal to a GregorianCalendarDate; so the
+    # following comparison evaluates as True:
     #
-    #   JulianCalendarDate(1752, 9, 2) == GregorianCalendarDate(1752, 9, 13)
+    #     JulianCalendarDate(1752, 9, 2) == GregorianCalendarDate(1752, 9, 13)
     #
-    # will evaluate as True.
-    #
-    # This interpretation of equality is analogous with the way Python handles comparisons
-    # for numeric types; there, too, the values are compared and not their representations;
-    # e.g. the integer 3 (int) == 3.0 (float).
+    # This definition of the comparison operators is analogous to the way Python handles
+    # comparisons for its built-in numeric types; there, too, the values are compared and
+    # not their representations. For example, the value 3 of type 'int' compares equal to
+    # the value 3.0 of type 'float'.
 
-    def __lt__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __lt__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date is strictly before the rhs date, False otherwise."""
         return self.to_julian_day_number() < rhs.to_julian_day_number()
 
-    def __le__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __le__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date is before or on the rhs date, False otherwise."""
         return self.to_julian_day_number() <= rhs.to_julian_day_number()
 
-    def __eq__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __eq__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date is on the same day as the right hand side day, False otherwise."""
         return self.to_julian_day_number() == rhs.to_julian_day_number()
 
-    def __ne__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __ne__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date is not on the same day as the right hand side day, False otherwise."""
         return self.to_julian_day_number() != rhs.to_julian_day_number()
 
-    def __gt__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __gt__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date strictly after the right hand side day, False otherwise."""
         return self.to_julian_day_number() > rhs.to_julian_day_number()
 
-    def __ge__(self, rhs: 'AbstractCalendarDate') -> bool:
+    def __ge__(self, rhs: AbstractCalendarDate) -> bool:
         """Return True if the lhs date is on or after the right hand side day, False otherwise."""
         return self.to_julian_day_number() >= rhs.to_julian_day_number()
 
-    def __next__(self) -> 'AbstractCalendarDate':
+    def __next__(self: TCalendarDate) -> TCalendarDate:
         """Calculate the next calendar day.
 
         Note that this method skips over the year zero.
@@ -157,7 +163,7 @@ class AbstractCalendarDate:
         return self._year_julian_day_number(normalized_year) + AbstractCalendarDate._days_before_month[month] + day
 
     @classmethod
-    def from_julian_day_number(cls, julian_day_number: int) -> 'AbstractCalendarDate':
+    def from_julian_day_number(cls, julian_day_number: int) -> TCalendarDate:
         """Convert a Julian day number to a calendar date."""
 
         # We perform our calculations with years that start in March. The advantage of this is that
@@ -209,7 +215,7 @@ class JulianCalendarDate(AbstractCalendarDate):
 
     @staticmethod
     def _leapyear_rule(normalized_year: int) -> bool:
-        """Is the normalized year is a leapyear, according to the Julian calendar?"""
+        """Is the normalized year a leapyear, according to the Julian calendar?"""
         return is_divisible_by(normalized_year, 4)
 
     @staticmethod
