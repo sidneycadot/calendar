@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-# Note: once support for typing.Self (as proposed in PEP-673) is mainstream, we can update the
+# Note: once support for typing.Self as proposed in PEP-673 is mainstream, we can update the
 # type annotations to use typing.Self instead of the 'TCalendarDate' type variable.
 TCalendarDate = TypeVar("TCalendarDate", bound="AbstractCalendarDate")
 
@@ -66,7 +66,7 @@ class AbstractCalendarDate:
         """String representation of a calendar date."""
         return "{}(year = {}, month = {}, day = {})".format(self.__class__.__name__, *self)
 
-    # Below, implementations are procided for the six comparison operators in Python.
+    # Below, implementations are provided for the six comparison operators in Python.
     #
     # Comparisons are done based on the underlying ordinal days denoted by the calendar dates;
     # the specific types (JulianCalendarDate, GregorianCalendarDate) are not taken into account.
