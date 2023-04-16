@@ -71,14 +71,14 @@ class AbstractCalendarDate:
     # Comparisons are done based on the underlying ordinal days denoted by the calendar dates;
     # the specific types (JulianCalendarDate, GregorianCalendarDate) are not taken into account.
     #
-    # Thuerefore, a JulianCalendarDate may compare equal to a GregorianCalendarDate; so the
-    # following comparison evaluates as True:
+    # Therefore, a JulianCalendarDate may compare equal to a GregorianCalendarDate; for example,
+    # the following comparison evaluates as True:
     #
     #     JulianCalendarDate(1752, 9, 2) == GregorianCalendarDate(1752, 9, 13)
     #
     # This definition of the comparison operators is analogous to the way Python handles
-    # comparisons for its built-in numeric types; there, too, the values are compared and
-    # not their representations. For example, the value 3 of type 'int' compares equal to
+    # comparisons for its built-in numeric types; there, too, the _values_ are compared and
+    # not their _representations_. For example, the value 3 of type 'int' compares equal to
     # the value 3.0 of type 'float'.
 
     def __lt__(self, rhs: AbstractCalendarDate) -> bool:
